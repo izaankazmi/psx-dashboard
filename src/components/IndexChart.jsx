@@ -41,7 +41,7 @@ import {
             tick={{ fill: "#6b7280", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={v => (v / 1000).toFixed(0) + "k"}
+            tickFormatter={v => v.toFixed(0)}
             width={40}
           />
           <Tooltip content={<CustomTooltip />} />
