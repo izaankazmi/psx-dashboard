@@ -3,25 +3,36 @@ import IndexChart from "./components/IndexChart";
 import TopMovers from "./components/TopMovers";
 import StatCard from "./components/StatCard";
 import SectorHeatmap from "./components/SectorHeatmap";
+import CurrencyBar from "./components/CurrencyBar";
+import GlobalIndices from "./components/GlobalIndices";
+import MarketBreadth from "./components/MarketBreadth";
 
 const REFRESH_MS = 60_000;
 
 export default function Dashboard() {
   const [market, setMarket] = useState(null);
   const [stocks, setStocks] = useState([]);
+  const [currency, setCurrency] = useState(null);
+  const [indices, setIndices] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = async () => {
     try {
-      const [mRes, sRes] = await Promise.all([
+      const [mRes, sRes, cRes, iRes] = await Promise.all([
         fetch("/api/market"),
         fetch("/api/stocks"),
+        fetch("/api/currency"),
+        fetch("/api/indices"),
       ]);
       const mData = await mRes.json();
       const sData = await sRes.json();
+      const cData = await cRes.json();
+      const iData = await iRes.json();
       setMarket(mData);
       setStocks(sData.stocks || []);
+      setCurrency(cData);
+      setIndices(iData.indices || []);
       setLastUpdated(new Date());
     } catch (err) {
       console.error("Fetch error:", err);
@@ -41,6 +52,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 p-6 font-sans">
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -66,7 +78,8 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {/* KPI Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <StatCard
               label="KSE-100 Index"
               value={market?.current_price?.toLocaleString() ?? "—"}
@@ -85,10 +98,16 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* Currency Bar */}
+          <div className="mb-4">
+            <CurrencyBar data={currency} />
+          </div>
+
+          {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
             <div className="lg:col-span-2 bg-gray-900 rounded-xl p-5">
               <h2 className="text-sm font-medium text-gray-400 mb-4">
-                KSE-100 · 30-Day Trend
+                HBL · 30-Day Trend
               </h2>
               <IndexChart data={market?.history ?? []} />
             </div>
@@ -100,11 +119,18 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-gray-900 rounded-xl p-5">
-            <h2 className="text-sm font-medium text-gray-400 mb-4">
-              Sector Performance
-            </h2>
-            <SectorHeatmap stocks={stocks} />
+          {/* Bottom Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div className="lg:col-span-2 bg-gray-900 rounded-xl p-5">
+              <h2 className="text-sm font-medium text-gray-400 mb-4">
+                Sector Performance
+              </h2>
+              <SectorHeatmap stocks={stocks} />
+            </div>
+            <div className="flex flex-col gap-4">
+              <MarketBreadth stocks={stocks} />
+              <GlobalIndices indices={indices} />
+            </div>
           </div>
         </>
       )}
